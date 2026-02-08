@@ -8,9 +8,12 @@ export default function WorkoutCard({ workout }) {
   }
 
   const accentColor = accentColors[workout.category] || 'var(--accent-blue)'
+  
+  const isTemplate = workout.type === 'template'
+  const linkPath = isTemplate ? `/template/${workout.id}` : `/session/${workout.id}`
 
   return (
-    <Link to={`/detail/${workout.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+    <Link to={linkPath} style={{ textDecoration: 'none', color: 'inherit' }}>
       <div style={{
         backgroundColor: 'var(--bg-primary)',
         border: '2px solid var(--border-color)',
@@ -44,24 +47,46 @@ export default function WorkoutCard({ workout }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ flex: 1, paddingLeft: '1rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-              {workout.name}
+              {isTemplate && '📝 '}{workout.name}
             </h3>
             
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-              📅 {new Date(workout.date).toLocaleDateString('es-ES', { 
-                day: 'numeric', 
-                month: 'short', 
-                year: 'numeric' 
-              })} • {workout.time || '18:30'}
-            </div>
+            {!isTemplate && workout.date && (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                📅 {new Date(workout.date).toLocaleDateString('es-ES', { 
+                  day: 'numeric', 
+                  month: 'short', 
+                  year: 'numeric' 
+                })} • {workout.time || '18:30'}
+              </div>
+            )}
 
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', lineHeight: '1.6' }}>
-              <div>{workout.exercises.length} ejercicios | ⏱️ {workout.duration || 60} min</div>
-              <div>💪 Volumen: {workout.totalVolume.toLocaleString()}kg</div>
+              <div>{workout.exercises.length} ejercicios {!isTemplate && workout.duration ? `| ⏱️ ${workout.duration} min` : ''}</div>
+              {!isTemplate && workout.totalVolume > 0 && (
+                <div>💪 Volumen: {workout.totalVolume.toLocaleString()}kg</div>
+              )}
+              {isTemplate && (
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginTop: '0.25rem' }}>
+                  Plantilla lista para usar
+                </div>
+              )}
             </div>
           </div>
 
-          {workout.completed && (
+          {isTemplate && (
+            <div style={{
+              backgroundColor: '#e0e7ff',
+              color: '#3730a3',
+              padding: '0.375rem 0.75rem',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 'bold'
+            }}>
+              📝 Plantilla
+            </div>
+          )}
+
+          {!isTemplate && workout.completed && (
             <div style={{
               backgroundColor: '#dcfce7',
               color: '#15803d',
@@ -70,20 +95,7 @@ export default function WorkoutCard({ workout }) {
               fontSize: '0.75rem',
               fontWeight: 'bold'
             }}>
-              ✓ Completo
-            </div>
-          )}
-
-          {workout.draft && (
-            <div style={{
-              backgroundColor: '#fef3c7',
-              color: '#92400e',
-              padding: '0.375rem 0.75rem',
-              borderRadius: '8px',
-              fontSize: '0.75rem',
-              fontWeight: 'bold'
-            }}>
-              🏗️ Borrador
+              ✅ Completado
             </div>
           )}
         </div>

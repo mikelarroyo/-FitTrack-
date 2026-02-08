@@ -5,31 +5,28 @@ import { useWorkouts } from '../context/WorkoutContext'
 export default function WorkoutEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { workouts, addWorkout, updateWorkout } = useWorkouts()
+  const { templates, addTemplate, updateTemplate } = useWorkouts()
   
   const [name, setName] = useState('')
   const [category, setCategory] = useState('pierna')
-  const [duration, setDuration] = useState(60)
   const [exercises, setExercises] = useState([])
 
   useEffect(() => {
     if (id) {
-      const workout = workouts.find(w => w.id === id)
-      if (workout) {
-        setName(workout.name)
-        setCategory(workout.category)
-        setDuration(workout.duration || 60)
-        setExercises(workout.exercises)
+      const template = templates.find(t => t.id === id)
+      if (template) {
+        setName(template.name)
+        setCategory(template.category)
+        setExercises(template.exercises)
       }
     }
-  }, [id, workouts])
+  }, [id, templates])
 
   const addExercise = () => {
     setExercises([...exercises, { 
       name: '', 
       series: 3, 
-      reps: 10, 
-      weight: 0 
+      reps: 10
     }])
   }
 
@@ -43,36 +40,29 @@ export default function WorkoutEditor() {
     setExercises(exercises.filter((_, i) => i !== index))
   }
 
-  const calculateTotalVolume = () => {
-    return exercises.reduce((sum, ex) => {
-      const volume = (ex.series || 0) * (ex.reps || 0) * (ex.weight || 0)
-      return sum + volume
-    }, 0)
-  }
-
-  const handleSave = (isDraft = false) => {
+  const handleSave = () => {
     if (!name.trim()) {
-      alert('Por favor, ingresa un nombre para la rutina')
+      alert('Por favor, ingresa un nombre para la plantilla')
       return
     }
 
-    const workout = {
-      id: id || Date.now().toString(),
+    if (exercises.length === 0) {
+      alert('Añade al menos un ejercicio')
+      return
+    }
+
+    const template = {
+      id: id || `template-${Date.now()}`,
       name,
       category,
-      duration,
-      exercises,
-      totalVolume: calculateTotalVolume(),
-      date: new Date().toISOString(),
-      time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-      completed: !isDraft,
-      draft: isDraft
+      exercises: exercises.filter(ex => ex.name.trim() !== ''),
+      isTemplate: true
     }
 
     if (id) {
-      updateWorkout(workout)
+      updateTemplate(template)
     } else {
-      addWorkout(workout)
+      addTemplate(template)
     }
 
     navigate('/')
@@ -80,9 +70,12 @@ export default function WorkoutEditor() {
 
   return (
     <div className="fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>
-        {id ? 'Editar Rutina' : 'Nueva Rutina'}
+      <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+        {id ? 'Editar Plantilla' : 'Nueva Plantilla'}
       </h1>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+        Crea una plantilla de entrenamiento. Los pesos los añadirás cuando realices la sesión.
+      </p>
 
       {/* Form Section */}
       <div style={{
@@ -93,7 +86,7 @@ export default function WorkoutEditor() {
         marginBottom: '1.5rem'
       }}>
         <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-          Nombre de la rutina
+          Nombre de la plantilla
         </label>
         <input
           type="text"
@@ -111,47 +104,26 @@ export default function WorkoutEditor() {
           }}
         />
 
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-              Categoría
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                fontSize: '1rem',
-                border: '2px solid var(--text-muted)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)'
-              }}
-            >
-              <option value="pierna">🦵 Pierna</option>
-              <option value="torso">💪 Torso</option>
-              <option value="fullbody">🏋️ Full Body</option>
-            </select>
-          </div>
-
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-              Duración (min)
-            </label>
-            <input
-              type="number"
-              value={duration}
-              onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                fontSize: '1rem',
-                border: '2px solid var(--text-muted)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)'
-              }}
-            />
-          </div>
+        <div>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+            Categoría
+          </label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              fontSize: '1rem',
+              border: '2px solid var(--text-muted)',
+              borderRadius: '8px',
+              backgroundColor: 'var(--bg-primary)'
+            }}
+          >
+            <option value="pierna">🦵 Pierna</option>
+            <option value="torso">💪 Torso</option>
+            <option value="fullbody">🏋️ Full Body</option>
+          </select>
         </div>
       </div>
 
@@ -173,7 +145,7 @@ export default function WorkoutEditor() {
           color: 'white',
           padding: '0.75rem 1rem',
           display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr 1fr 60px',
+          gridTemplateColumns: '2fr 1fr 1fr 60px',
           gap: '1rem',
           fontSize: '0.875rem',
           fontWeight: 'bold',
@@ -182,7 +154,6 @@ export default function WorkoutEditor() {
           <div>Ejercicio</div>
           <div>Series</div>
           <div>Reps</div>
-          <div>Peso(kg)</div>
           <div></div>
         </div>
 
@@ -191,7 +162,7 @@ export default function WorkoutEditor() {
           <div key={index} style={{
             padding: '1rem',
             display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr 1fr 60px',
+            gridTemplateColumns: '2fr 1fr 1fr 60px',
             gap: '1rem',
             alignItems: 'center',
             backgroundColor: index % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
@@ -213,6 +184,7 @@ export default function WorkoutEditor() {
               type="number"
               value={exercise.series}
               onChange={(e) => updateExercise(index, 'series', parseInt(e.target.value) || 0)}
+              min="1"
               style={{
                 padding: '0.5rem',
                 border: '1px solid var(--border-color)',
@@ -225,18 +197,7 @@ export default function WorkoutEditor() {
               type="number"
               value={exercise.reps}
               onChange={(e) => updateExercise(index, 'reps', parseInt(e.target.value) || 0)}
-              style={{
-                padding: '0.5rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                fontSize: '0.9375rem',
-                textAlign: 'center'
-              }}
-            />
-            <input
-              type="number"
-              value={exercise.weight}
-              onChange={(e) => updateExercise(index, 'weight', parseFloat(e.target.value) || 0)}
+              min="1"
               style={{
                 padding: '0.5rem',
                 border: '1px solid var(--border-color)',
@@ -260,6 +221,16 @@ export default function WorkoutEditor() {
           </div>
         ))}
 
+        {exercises.length === 0 && (
+          <div style={{
+            padding: '2rem',
+            textAlign: 'center',
+            color: 'var(--text-muted)'
+          }}>
+            No hay ejercicios. Añade el primero 👇
+          </div>
+        )}
+
         {/* Add Exercise Button */}
         <button
           onClick={addExercise}
@@ -281,28 +252,45 @@ export default function WorkoutEditor() {
         </button>
       </div>
 
-      {/* Volume Info */}
+      {/* Info Box */}
       <div style={{
-        backgroundColor: '#eff6ff',
-        border: '2px solid var(--accent-blue)',
+        backgroundColor: '#fef3c7',
+        border: '2px solid var(--accent-yellow)',
         borderRadius: '12px',
         padding: '1rem',
         marginBottom: '1.5rem'
       }}>
-        <div style={{ fontWeight: 'bold', color: '#1e40af', fontSize: '1rem' }}>
-          📊 Volumen total estimado
+        <div style={{ fontWeight: 'bold', color: '#92400e', marginBottom: '0.25rem' }}>
+          💡 Recuerda
         </div>
-        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e40af', marginTop: '0.25rem' }}>
-          {calculateTotalVolume().toLocaleString()} kg
+        <div style={{ fontSize: '0.9375rem', color: '#92400e' }}>
+          Esta es solo la plantilla. Cuando inicies el entrenamiento podrás añadir los pesos de cada serie.
         </div>
       </div>
 
       {/* Action Buttons */}
       <div style={{ display: 'flex', gap: '1rem' }}>
         <button
-          onClick={() => handleSave(false)}
+          onClick={() => navigate('/')}
           style={{
             flex: 1,
+            padding: '1rem',
+            backgroundColor: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+            border: '2px solid var(--border-color)',
+            borderRadius: '12px',
+            fontSize: '1.125rem',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          Cancelar
+        </button>
+        
+        <button
+          onClick={handleSave}
+          style={{
+            flex: 2,
             padding: '1rem',
             backgroundColor: '#22c55e',
             color: 'white',
@@ -316,27 +304,7 @@ export default function WorkoutEditor() {
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#16a34a'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#22c55e'}
         >
-          ✓ GUARDAR
-        </button>
-        
-        <button
-          onClick={() => handleSave(true)}
-          style={{
-            flex: 1,
-            padding: '1rem',
-            backgroundColor: 'var(--accent-orange)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            fontSize: '1.125rem',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-orange)'}
-        >
-          💾 Borrador
+          ✓ Guardar Plantilla
         </button>
       </div>
     </div>

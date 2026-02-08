@@ -1,34 +1,68 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { getWorkouts, saveWorkouts } from '../utils/storage'
+import { getTemplates, saveTemplates, getSessions, saveSessions } from '../utils/storage'
 
 const WorkoutContext = createContext()
 
 export function WorkoutProvider({ children }) {
-  const [workouts, setWorkouts] = useState([])
+  const [templates, setTemplates] = useState([])
+  const [sessions, setSessions] = useState([])
 
   useEffect(() => {
-    const loadedWorkouts = getWorkouts()
-    setWorkouts(loadedWorkouts)
+    const loadedTemplates = getTemplates()
+    const loadedSessions = getSessions()
+    setTemplates(loadedTemplates)
+    setSessions(loadedSessions)
   }, [])
 
   useEffect(() => {
-    saveWorkouts(workouts)
-  }, [workouts])
+    if (templates.length > 0) {
+      saveTemplates(templates)
+    }
+  }, [templates])
 
-  const addWorkout = (workout) => {
-    setWorkouts([workout, ...workouts])
+  useEffect(() => {
+    if (sessions.length > 0) {
+      saveSessions(sessions)
+    }
+  }, [sessions])
+
+  // Template operations
+  const addTemplate = (template) => {
+    setTemplates([template, ...templates])
   }
 
-  const updateWorkout = (updatedWorkout) => {
-    setWorkouts(workouts.map(w => w.id === updatedWorkout.id ? updatedWorkout : w))
+  const updateTemplate = (updatedTemplate) => {
+    setTemplates(templates.map(t => t.id === updatedTemplate.id ? updatedTemplate : t))
   }
 
-  const deleteWorkout = (id) => {
-    setWorkouts(workouts.filter(w => w.id !== id))
+  const deleteTemplate = (id) => {
+    setTemplates(templates.filter(t => t.id !== id))
+  }
+
+  // Session operations
+  const addSession = (session) => {
+    setSessions([session, ...sessions])
+  }
+
+  const updateSession = (updatedSession) => {
+    setSessions(sessions.map(s => s.id === updatedSession.id ? updatedSession : s))
+  }
+
+  const deleteSession = (id) => {
+    setSessions(sessions.filter(s => s.id !== id))
   }
 
   return (
-    <WorkoutContext.Provider value={{ workouts, addWorkout, updateWorkout, deleteWorkout }}>
+    <WorkoutContext.Provider value={{ 
+      templates, 
+      sessions, 
+      addTemplate, 
+      updateTemplate, 
+      deleteTemplate,
+      addSession,
+      updateSession,
+      deleteSession
+    }}>
       {children}
     </WorkoutContext.Provider>
   )
